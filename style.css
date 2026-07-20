@@ -1,0 +1,160 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  background-color: #f0f2f5;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+
+.chat-container {
+  width: 100%;
+  max-width: 800px;
+  height: 85vh;
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.chat-header {
+  background: #1a73e8;
+  color: #ffffff;
+  padding: 16px 20px;
+  text-align: center;
+}
+
+.chat-header h2 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.chat-box {
+  flex: 1;
+  padding: 20px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  background-color: #fafafa;
+}
+
+/* Base message bubble */
+.message {
+  max-width: 85%;
+  padding: 12px 18px;
+  border-radius: 14px;
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+.user-message {
+  align-self: flex-end;
+  background-color: #1a73e8;
+  color: #ffffff;
+  border-bottom-right-radius: 2px;
+}
+
+.bot-message {
+  align-self: flex-start;
+  background-color: #ffffff;
+  color: #1c1e21;
+  border: 1px solid #e4e6eb;
+  border-bottom-left-radius: 2px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+
+/* Markdown Formatted Elements inside Messages */
+.message h1, .message h2, .message h3 {
+  margin-top: 12px;
+  margin-bottom: 8px;
+  color: #111;
+}
+
+.message ul, .message ol {
+  padding-left: 20px;
+  margin: 8px 0;
+}
+
+.message li {
+  margin-bottom: 4px;
+}
+
+.message p {
+  margin: 6px 0;
+}
+
+/* Styled Tables for Markdown outputs */
+.message table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 12px 0;
+  font-size: 0.9rem;
+}
+
+.message th, .message td {
+  border: 1px solid #dcdfe6;
+  padding: 8px 12px;
+  text-align: left;
+}
+
+.message th {
+  background-color: #f2f4f7;
+  font-weight: 600;
+}
+
+.message tr:nth-child(even) {
+  background-color: #f8f9fa;
+}
+
+/* Input Bar Area */
+.chat-input-area {
+  display: flex;
+  padding: 16px;
+  background: #ffffff;
+  border-top: 1px solid #e4e6eb;
+  gap: 10px;
+}
+
+input[type="text"] {
+  flex: 1;
+  padding: 12px 16px;
+  border: 1px solid #dcdfe6;
+  border-radius: 24px;
+  outline: none;
+  font-size: 0.95rem;
+  transition: border-color 0.2s;
+}
+
+input[type="text"]:focus {
+  border-color: #1a73e8;
+}
+
+button {
+  padding: 12px 24px;
+  background-color: #1a73e8;
+  color: #ffffff;
+  border: none;
+  border-radius: 24px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background-color 0.2s;
+}
+
+button:hover {
+  background-color: #1557b0;
+}
+
+button:disabled {
+  background-color: #bac0c7;
+  cursor: not-allowed;
+}
