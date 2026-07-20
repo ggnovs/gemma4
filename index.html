@@ -11,7 +11,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
   <style>
-    /* CSS CSS VARIABLES & RESET */
+    /* CSS VARIABLES & RESET */
     :root {
       --bg-primary: #0d1117;
       --bg-surface: #161b22;
@@ -142,6 +142,7 @@
       line-height: 1.5;
       font-size: 0.95rem;
       word-break: break-word;
+      white-space: pre-wrap; /* Preserves newlines and formatting from Gemma */
     }
 
     .user .message-content {
@@ -256,9 +257,7 @@
       <!-- Initial Welcome Message -->
       <div class="message bot">
         <div class="message-sender">Gemma 4 Agent</div>
-        <div class="message-content">
-          Hello! I am powered by Gemma 4. How can I assist your business workflow today?
-        </div>
+        <div class="message-content">Hello! I am powered by Gemma 4. How can I assist your business workflow today?</div>
       </div>
     </div>
 
@@ -283,6 +282,9 @@
 
   <!-- JAVASCRIPT LOGIC -->
   <script>
+    // ⚠️ REPLACE THIS URL WITH YOUR LIVE NGROK URL FROM KAGGLE (including /chat at the end)
+    const KAGGLE_API_URL = "https://uncrown-everglade-outflank.ngrok-free.dev/chat";
+
     const chatForm = document.getElementById('chat-form');
     const userInput = document.getElementById('user-input');
     const chatWindow = document.getElementById('chat-window');
@@ -301,14 +303,14 @@
       const loadingBubble = appendMessage('bot', 'Gemma 4 Agent', 'Thinking...');
 
       try {
-        // 3. Call your API backend or local Ollama instance
-        // Replace this demo response with your actual fetch call later
+        // 3. Send request to Kaggle Backend
         const botResponse = await getGemmaResponse(messageText);
         
-        // Update loading bubble text with actual response
+        // Update loading bubble text with actual response from Gemma 4
         loadingBubble.querySelector('.message-content').textContent = botResponse;
       } catch (error) {
-        loadingBubble.querySelector('.message-content').textContent = '⚠️ Error communicating with Gemma 4.';
+        console.error("Error calling Gemma 4 API:", error);
+        loadingBubble.querySelector('.message-content').textContent = '⚠️ Error communicating with Gemma 4 backend. Check if Kaggle notebook is active.';
       }
     });
 
@@ -340,11 +342,23 @@
       );
     }
 
-    // Simulated API call (Plug in your real backend endpoint here later)
+    // Real API Call to Kaggle / Ngrok
     async function getGemmaResponse(prompt) {
-      // Simulate network delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      return `Received your input: "${prompt}". Connected to Gemma 4 endpoint!`;
+      const response = await fetch(KAGGLE_API_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "ngrok-skip-browser-warning": "true" // Bypasses the Ngrok landing page modal
+        },
+        body: JSON.stringify({ prompt: prompt })
+      });
+
+      if (!response.ok) {
+        throw new Error(`Server returned HTTP status ${response.status}`);
+      }
+
+      const data = await response.json();
+      return data.response || data.error || "No response received.";
     }
   </script>
 </body>
