@@ -1,1 +1,106 @@
+/* src/styles/chat.css */
+#chat-view {
+  display: flex;
+  flex-direction: column;
+  max-width: 900px;
+  margin: 0 auto;
+  height: 100%;
+  padding-bottom: 20px;
+}
 
+.chat-box {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.message {
+  max-width: 75%;
+  padding: 12px 16px;
+  border-radius: 18px;
+  font-size: 0.95rem;
+  line-height: 1.4;
+  word-wrap: break-word;
+}
+
+.bot-message {
+  align-self: flex-start;
+  background-color: #f1f3f4;
+  color: var(--text-main);
+  border-bottom-left-radius: 4px;
+}
+
+.user-message {
+  align-self: flex-end;
+  background-color: var(--primary-color);
+  color: #ffffff;
+  border-bottom-right-radius: 4px;
+}
+
+.message.loading {
+  font-style: italic;
+  opacity: 0.7;
+}
+
+/* Input Area */
+.chat-input-area {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 16px;
+  background: var(--card-bg);
+  padding: 8px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 30px;
+  box-shadow: var(--shadow);
+}
+
+.upload-plus-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #f1f3f4;
+  color: var(--text-main);
+  font-size: 1.25rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.upload-plus-btn:hover {
+  background: #e0e0e0;
+}
+
+.chat-input-area input[type="text"] {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-size: 0.95rem;
+  padding: 8px 4px;
+  background: transparent;
+}
+
+.chat-input-area button#sendBtn {
+  background: var(--primary-color);
+  color: white;
+  border: none;
+  padding: 8px 20px;
+  border-radius: 20px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.chat-input-area button#sendBtn:hover {
+  background: var(--primary-hover);
+}
