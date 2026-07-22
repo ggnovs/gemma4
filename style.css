@@ -11,7 +11,7 @@
   --chat-user-bg: #e8f0fe;
   --today-bg: #eff6ff;
   --today-border: #3b82f6;
-  --pill-bg: #3b82f6;
+  --pill-bg: #2563eb;
   --pill-text: #ffffff;
 }
 
@@ -28,7 +28,7 @@ body.dark-mode {
   --chat-user-bg: #173153;
   --today-bg: #1e3a8a;
   --today-border: #60a5fa;
-  --pill-bg: #2563eb;
+  --pill-bg: #3b82f6;
   --pill-text: #ffffff;
 }
 
@@ -240,7 +240,7 @@ body {
   background: var(--primary-hover);
 }
 
-/* --- ACADEMIC CALENDAR GRID VIEW --- */
+/* --- CALENDAR GRID & MONTH NAV --- */
 .calendar-header-bar {
   display: flex;
   justify-content: space-between;
@@ -298,7 +298,6 @@ body {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  transition: border-color 0.2s;
 }
 
 .calendar-day-cell.empty {
@@ -316,55 +315,101 @@ body {
   margin-bottom: 4px;
 }
 
+.cell-events-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  overflow-y: auto;
+  max-height: 60px;
+}
+
 .course-tag-pill {
-  font-size: 0.72rem;
+  font-size: 0.7rem;
   background: var(--pill-bg);
   color: var(--pill-text);
-  padding: 3px 6px;
+  padding: 2px 5px;
   border-radius: 4px;
-  margin-top: 3px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  cursor: pointer;
-  font-weight: 500;
+  font-weight: 600;
 }
 
+/* --- GROUPED DEADLINES SECTION --- */
 .upcoming-deadlines-section {
-  margin-top: 25px;
+  margin-top: 30px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.grouped-deadlines-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.course-group-card {
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
   display: flex;
   flex-direction: column;
   gap: 12px;
 }
 
-/* --- CARDS & GRID --- */
-.cards-grid { 
-  display: grid; 
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); 
-  gap: 16px; 
-}
-
-.card { 
-  background: var(--panel-bg); 
-  border: 1px solid var(--border); 
-  padding: 16px; 
-  border-radius: 10px; 
+.course-group-header {
   display: flex;
-  flex-direction: column;
-  gap: 6px;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 8px;
 }
 
-.card h3 {
-  font-size: 1rem;
-  color: var(--primary);
-}
-
-.card h4 {
+.course-header-badge {
+  background: var(--primary);
+  color: #ffffff;
+  font-weight: bold;
+  padding: 4px 12px;
+  border-radius: 6px;
   font-size: 0.95rem;
 }
 
-.card p {
-  font-size: 0.88rem;
+.course-count-tag {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.cards-grid { 
+  display: grid; 
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); 
+  gap: 12px; 
+}
+
+.card { 
+  background: var(--bg); 
+  border: 1px solid var(--border); 
+  padding: 12px 14px; 
+  border-radius: 8px; 
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.card-date-badge {
+  font-size: 0.9rem;
+  font-weight: bold;
+  color: var(--primary);
+}
+
+.card-event-title {
+  font-size: 0.95rem;
+  color: var(--text);
+}
+
+.card-event-desc {
+  font-size: 0.85rem;
   color: var(--text-muted);
 }
 
