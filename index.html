@@ -5,13 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Gemma AI Study Workspace</title>
   
-  <!-- Cache-busted stylesheet references (?v=1 forces refresh) -->
-  <link rel="stylesheet" href="./src/styles/main.css?v=1">
-  <link rel="stylesheet" href="./src/styles/chat.css?v=1">
-  <link rel="stylesheet" href="./src/styles/calendar.css?v=1">
-  <link rel="stylesheet" href="./src/styles/notes.css?v=1">
+  <link rel="stylesheet" href="./src/styles/main.css?v=2">
+  <link rel="stylesheet" href="./src/styles/chat.css?v=2">
+  <link rel="stylesheet" href="./src/styles/calendar.css?v=2">
+  <link rel="stylesheet" href="./src/styles/notes.css?v=2">
+  <link rel="stylesheet" href="./src/styles/quiz.css?v=2">
   
-  <!-- External Libraries -->
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.6/dist/purify.min.js"></script>
 </head>
@@ -37,17 +36,38 @@
       <li data-target="chat-view" class="menu-item active">💬 Gemma Chat</li>
       <li data-target="calendar-view" class="menu-item">📅 My Calendar</li>
       <li data-target="notes-view" class="menu-item">📝 My Notes</li>
+      <li data-target="quiz-view" class="menu-item">🎯 Quiz Help</li>
+      <li id="openSettingsBtn" class="menu-item">⚙️ Settings</li>
     </ul>
   </nav>
+
+  <!-- Settings Modal -->
+  <div id="settingsModal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>Settings</h3>
+        <button id="closeSettingsBtn" class="icon-btn">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="setting-row">
+          <span>Dark Mode</span>
+          <label class="switch">
+            <input type="checkbox" id="darkModeToggle">
+            <span class="slider round"></span>
+          </label>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- Component View Containers -->
   <main class="content-container">
     <section id="chat-view" class="app-view active"></section>
     <section id="calendar-view" class="app-view hidden"></section>
     <section id="notes-view" class="app-view hidden"></section>
+    <section id="quiz-view" class="app-view hidden"></section>
   </main>
 
-  <!-- Central Controller Module -->
-  <script type="module" src="./src/app.js"></script>
+  <script type="module" src="./src/app.js?v=2"></script>
 </body>
 </html>
