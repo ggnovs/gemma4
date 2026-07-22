@@ -1,4 +1,11 @@
-const API_BASE = "http://127.0.0.1:5000/api";
+// --- CONFIGURATION ---
+// Replace this with your active Kaggle ngrok URL
+const API_BASE = "https://uncrown-everglade-outflank.ngrok-free.dev/api";
+
+// Standard headers required to bypass ngrok's browser warning landing page
+const DEFAULT_HEADERS = {
+  "ngrok-skip-browser-warning": "true"
+};
 
 // --- DOM ELEMENTS ---
 const hamburgerBtn = document.getElementById("hamburgerBtn");
@@ -56,24 +63,39 @@ document.getElementById("saveNoteBtn").addEventListener("click", async () => {
   try {
     const res = await fetch(`${API_BASE}/notes`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { 
+        ...DEFAULT_HEADERS,
+        "Content-Type": "application/json" 
+      },
       body: JSON.stringify({ title, content })
     });
+    
     const data = await res.json();
-    if (data.status === "success") {
+    if (res.ok && data.status === "success") {
       alert("Note saved to backend!");
       loadNotesHistory();
+    } else {
+      alert(`Error saving note: ${data.error || "Unknown error"}`);
     }
   } catch (err) {
     console.error("Save note error:", err);
+    alert("Connection error: Ensure your Kaggle notebook and ngrok tunnel are running.");
   }
 });
 
 async function loadNotesHistory() {
   const container = document.getElementById("savedNotesList");
   try {
-    const res = await fetch(`${API_BASE}/notes`);
+    const res = await fetch(`${API_BASE}/notes`, {
+      headers: DEFAULT_HEADERS
+    });
     const notes = await res.json();
+    
+    if (!res.ok) {
+      container.innerHTML = `<p>Error loading notes: ${notes.error || "Server issue"}</p>`;
+      return;
+    }
+
     container.innerHTML = notes.map(n => `
       <div class="card" style="margin-top:8px;">
         <h4>${DOMPurify.sanitize(n.title)}</h4>
@@ -82,11 +104,12 @@ async function loadNotesHistory() {
       </div>
     `).join("");
   } catch (e) {
-    container.innerHTML = "<p>Failed to load saved notes.</p>";
+    console.error("Load notes error:", e);
+    container.innerHTML = "<p>Failed to load saved notes. Verify Kaggle backend state.</p>";
   }
 }
 
-// --- SYLLABUS UPLOAD TO GEMMA ---
+// --- SYLLABUS UPLOAD TO GEMMA (PDF/DOCX/TXT) ---
 document.getElementById("syllabusInput").addEventListener("change", async (e) => {
   const file = e.target.files[0];
   if (!file) return;
@@ -99,17 +122,30 @@ document.getElementById("syllabusInput").addEventListener("change", async (e) =>
   try {
     const res = await fetch(`${API_BASE}/upload-syllabus`, {
       method: "POST",
+      headers: DEFAULT_HEADERS,
       body: formData
     });
+
     const data = await res.json();
+
+    if (!res.ok) {
+      appendChatMessage(`❌ Upload Error (${res.status}): ${data.error || "Failed to parse file"}`, "bot-message");
+      return;
+    }
+
     appendChatMessage(`✅ Syllabus parsed! Gemma extracted ${data.events_found} key deadlines into your Calendar.`, "bot-message");
+    
+    // Automatically reload calendar view data if visible
+    loadCalendarEvents();
   } catch (err) {
-    appendChatMessage("❌ Failed to parse syllabus on backend.", "bot-message");
+    console.error("Syllabus Upload Error:", err);
+    appendChatMessage("❌ Connection Error: Unable to reach Kaggle backend. Check if your ngrok tunnel is active.", "bot-message");
   }
 });
 
 function appendChatMessage(text, className) {
   const box = document.getElementById("chatBox");
+  if (!box) return;
   const msg = document.createElement("div");
   msg.className = `message ${className}`;
   msg.textContent = text;
@@ -120,13 +156,24 @@ function appendChatMessage(text, className) {
 // --- CALENDAR RETRIEVAL ---
 async function loadCalendarEvents() {
   const list = document.getElementById("calendarList");
+  if (!list) return;
+
   try {
-    const res = await fetch(`${API_BASE}/calendar`);
+    const res = await fetch(`${API_BASE}/calendar`, {
+      headers: DEFAULT_HEADERS
+    });
     const events = await res.json();
+    
+    if (!res.ok) {
+      list.innerHTML = `<p>Error fetching calendar: ${events.error || "Server error"}</p>`;
+      return;
+    }
+
     if (events.length === 0) {
       list.innerHTML = "<p>No deadlines found yet. Upload a syllabus in chat!</p>";
       return;
     }
+
     list.innerHTML = events.map(ev => `
       <div class="card">
         <h3>${ev.event_date}</h3>
@@ -135,7 +182,8 @@ async function loadCalendarEvents() {
       </div>
     `).join("");
   } catch (e) {
-    list.innerHTML = "<p>Error connecting to Calendar backend.</p>";
+    console.error("Load calendar error:", e);
+    list.innerHTML = "<p>Error connecting to Calendar backend. Check ngrok connection.</p>";
   }
 }
 
