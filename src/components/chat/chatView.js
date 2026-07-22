@@ -1,12 +1,11 @@
 import { loadCalendarEvents } from '../calendar/calendarView.js';
 
 const API_BASE = "https://uncrown-everglade-outflank.ngrok-free.dev/api";
-const DEFAULT_HEADERS = { "ngrok-skip-browser-warning": "true" };
 
 export function mountChatView(container) {
   container.innerHTML = `
     <div id="chatBox" class="chat-box">
-      <div class="message bot-message">Hello! Upload your syllabus using the (+) button to parse course deadlines.</div>
+      <div class="message bot-message">Hello! Upload your syllabus using the (+) button, or ask me anything about your courses.</div>
     </div>
     
     <div class="chat-input-area">
@@ -17,7 +16,60 @@ export function mountChatView(container) {
     </div>
   `;
 
-  document.getElementById("syllabusInput").addEventListener("change", handleSyllabusUpload);
+  const sendBtn = document.getElementById("sendBtn");
+  const userInput = document.getElementById("userInput");
+  const syllabusInput = document.getElementById("syllabusInput");
+
+  // 1. Click 'Send' button
+  sendBtn.addEventListener("click", handleSendMessage);
+
+  // 2. Press 'Enter' key in text input
+  userInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      handleSendMessage();
+    }
+  });
+
+  // 3. (+) Upload Syllabus button
+  syllabusInput.addEventListener("change", handleSyllabusUpload);
+}
+
+async function handleSendMessage() {
+  const userInput = document.getElementById("userInput");
+  const message = userInput.value.trim();
+
+  if (!message) return;
+
+  // Render user message in UI & clear input box
+  appendChatMessage(message, "user-message");
+  userInput.value = "";
+
+  // Render loading placeholder
+  const loadingId = appendChatMessage("Thinking...", "bot-message loading");
+
+  try {
+    const res = await fetch(`${API_BASE}/chat`, {
+      method: "POST",
+      headers: { 
+        "Content-Type": "application/json",
+        "ngrok-skip-browser-warning": "true" 
+      },
+      body: JSON.stringify({ message })
+    });
+    
+    const data = await res.json();
+    removeChatMessage(loadingId);
+
+    if (res.ok) {
+      appendChatMessage(data.response || "Message received!", "bot-message");
+    } else {
+      appendChatMessage(`❌ Error: ${data.error || "Failed to get response"}`, "bot-message");
+    }
+  } catch (err) {
+    removeChatMessage(loadingId);
+    appendChatMessage("❌ Connection Error: Ensure Kaggle backend is online.", "bot-message");
+  }
 }
 
 async function handleSyllabusUpload(e) {
@@ -32,7 +84,7 @@ async function handleSyllabusUpload(e) {
   try {
     const res = await fetch(`${API_BASE}/upload-syllabus`, {
       method: "POST",
-      headers: DEFAULT_HEADERS,
+      headers: { "ngrok-skip-browser-warning": "true" },
       body: formData
     });
     const data = await res.json();
@@ -45,15 +97,36 @@ async function handleSyllabusUpload(e) {
     }
   } catch (err) {
     appendChatMessage("❌ Connection Error: Ensure Kaggle backend is online.", "bot-message");
+  } finally {
+    e.target.value = ""; // Reset input so same file can be re-uploaded if needed
   }
 }
 
+let msgCounter = 0;
 function appendChatMessage(text, className) {
   const box = document.getElementById("chatBox");
-  if (!box) return;
+  if (!box) return null;
+
+  msgCounter++;
+  const msgId = `msg-${msgCounter}`;
+
   const msg = document.createElement("div");
+  msg.id = msgId;
   msg.className = `message ${className}`;
-  msg.textContent = text;
+  
+  if (window.marked && window.DOMPurify) {
+    msg.innerHTML = DOMPurify.sanitize(marked.parse(text));
+  } else {
+    msg.textContent = text;
+  }
+
   box.appendChild(msg);
   box.scrollTop = box.scrollHeight;
+  return msgId;
+}
+
+function removeChatMessage(id) {
+  if (!id) return;
+  const el = document.getElementById(id);
+  if (el) el.remove();
 }
