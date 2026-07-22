@@ -3,33 +3,128 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Gemma 4 AI Assistant</title>
-  
-  <!-- External CSS -->
+  <title>Gemma AI Study Workspace</title>
   <link rel="stylesheet" href="style.css">
   
-  <!-- External Markdown Parser & Sanitizer for clean formatting -->
+  <!-- Markdown & Sanitizer Libraries -->
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.6/dist/purify.min.js"></script>
 </head>
 <body>
 
-  <div class="chat-container">
-    <div class="chat-header">
-      <h2>Gemma 4 AI Assistant</h2>
+  <!-- APP HEADER -->
+  <header class="app-header">
+    <div class="header-left">
+      <button id="hamburgerBtn" class="icon-btn">☰</button>
+      <h1 id="appTitle">Gemma Chat</h1>
     </div>
-    
-    <div class="chat-box" id="chatBox">
-      <div class="message bot-message">System Online! How can I help you today?</div>
+    <div class="header-right">
+      <span class="user-badge">Student Mode</span>
     </div>
-    
-    <div class="chat-input-area">
-      <input type="text" id="userInput" placeholder="Type a message..." autocomplete="off">
-      <button id="sendBtn">Send</button>
-    </div>
-  </div>
+  </header>
 
-  <!-- Application Logic JS -->
+  <!-- HAMBURGER DRAWER -->
+  <div id="drawerOverlay" class="drawer-overlay hidden"></div>
+  <nav id="navDrawer" class="nav-drawer hidden">
+    <div class="drawer-header">
+      <h3>Navigation</h3>
+      <button id="closeDrawerBtn" class="icon-btn">✕</button>
+    </div>
+    <ul class="drawer-menu">
+      <li data-target="chat-view" class="menu-item active">💬 Gemma Chat</li>
+      <li data-target="calendar-view" class="menu-item">📅 My Calendar</li>
+      <li data-target="notes-view" class="menu-item">📝 My Notes</li>
+      <li data-target="class-notes-view" class="menu-item">📚 Class Notes & Quizzes</li>
+      <li data-target="settings-view" class="menu-item">⚙️ Settings</li>
+    </ul>
+  </nav>
+
+  <!-- MAIN CONTENT CONTAINER -->
+  <main class="content-container">
+
+    <!-- VIEW 1: GEMMA CHAT -->
+    <section id="chat-view" class="app-view active">
+      <div id="chatBox" class="chat-box">
+        <div class="message bot-message">Hello! Upload your syllabus using the (+) button, or ask me anything about your courses.</div>
+      </div>
+      
+      <div class="chat-input-area">
+        <!-- Syllabus Upload Button -->
+        <label for="syllabusInput" class="upload-plus-btn" title="Upload Syllabus">+</label>
+        <input type="file" id="syllabusInput" accept=".pdf,.txt,.docx" style="display:none;">
+        
+        <input type="text" id="userInput" placeholder="Ask Gemma or upload a syllabus (+)..." autocomplete="off">
+        <button id="sendBtn">Send</button>
+      </div>
+    </section>
+
+    <!-- VIEW 2: MY CALENDAR -->
+    <section id="calendar-view" class="app-view hidden">
+      <h2>Academic Calendar</h2>
+      <p class="subtitle">Important dates automatically parsed from your syllabus uploads.</p>
+      <div id="calendarList" class="cards-grid">
+        <!-- Calendar items populate here -->
+      </div>
+    </section>
+
+    <!-- VIEW 3: MY NOTES -->
+    <section id="notes-view" class="app-view hidden">
+      <div class="notes-header">
+        <input type="text" id="noteTitleInput" placeholder="Untitled Note Title..." value="Untitled Note">
+        <span id="noteDateStamp" class="date-stamp"></span>
+        <button id="saveNoteBtn" class="btn-primary">Save Note</button>
+      </div>
+      <textarea id="noteContentArea" placeholder="Type your personal lecture notes or summary here..."></textarea>
+      
+      <h3>Saved Notes</h3>
+      <div id="savedNotesList" class="notes-history-list"></div>
+    </section>
+
+    <!-- VIEW 4: CLASS NOTES & QUIZZES -->
+    <section id="class-notes-view" class="app-view hidden">
+      <h2>Class Notes & Slide Trainer</h2>
+      
+      <div class="class-selector-card">
+        <label for="classDropdown">Select Class:</label>
+        <select id="classDropdown">
+          <option value="">-- Choose Class --</option>
+        </select>
+        <button id="addClassBtn" class="btn-secondary">+ Add New Class</button>
+      </div>
+
+      <div class="upload-box">
+        <h3>Upload Lecture Slides / Reading Materials</h3>
+        <input type="file" id="lectureSlideInput" multiple accept=".pdf,.ppt,.pptx,.txt">
+        <button id="uploadSlidesBtn" class="btn-primary">Upload & Train Gemma</button>
+      </div>
+
+      <div class="quiz-generator-section">
+        <button id="generateQuizBtn" class="btn-quiz">🧠 Generate Quiz from Class Notes</button>
+        <div id="quizContainer" class="quiz-container hidden"></div>
+      </div>
+    </section>
+
+    <!-- VIEW 5: SETTINGS -->
+    <section id="settings-view" class="app-view hidden">
+      <h2>Settings</h2>
+      <div class="settings-card">
+        <div class="setting-item">
+          <span>Dark Theme</span>
+          <label class="switch">
+            <input type="checkbox" id="darkToggle">
+            <span class="slider round"></span>
+          </label>
+        </div>
+        <hr>
+        <div class="setting-item">
+          <span>Account</span>
+          <button id="signOutBtn" class="btn-danger" disabled>Sign Out (Disabled for Testing)</button>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
   <script src="app.js"></script>
 </body>
 </html>
