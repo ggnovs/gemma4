@@ -133,7 +133,7 @@ document.getElementById("syllabusInput").addEventListener("change", async (e) =>
 
     appendChatMessage(`✅ [${data.course_code}] Syllabus parsed! Extracted ${data.events_found} key deadlines into your Calendar.`, "bot-message");
     
-    // Reload calendar data to render the new course events
+    // Reload calendar data to render new course events
     loadCalendarEvents();
   } catch (err) {
     console.error("Syllabus Upload Error:", err);
@@ -151,25 +151,26 @@ function appendChatMessage(text, className) {
   box.scrollTop = box.scrollHeight;
 }
 
-// --- DYNAMIC GRID CALENDAR LOGIC ---
+// --- CALENDAR & DEADLINE RETRIEVAL ---
 async function loadCalendarEvents() {
   try {
     const res = await fetch(`${API_BASE}/calendar`, { headers: DEFAULT_HEADERS });
     cachedEvents = await res.json();
     
     if (!res.ok) {
-      document.getElementById("calendarList").innerHTML = `<p>Error loading calendar: ${cachedEvents.error}</p>`;
+      document.getElementById("groupedDeadlinesContainer").innerHTML = `<p>Error loading calendar: ${cachedEvents.error}</p>`;
       return;
     }
 
     renderCalendarGrid();
-    renderDeadlinesList();
+    renderGroupedDeadlines();
   } catch (e) {
     console.error("Calendar fetch error:", e);
-    document.getElementById("calendarList").innerHTML = "<p>Error connecting to Calendar backend.</p>";
+    document.getElementById("groupedDeadlinesContainer").innerHTML = "<p>Error connecting to Calendar backend.</p>";
   }
 }
 
+// --- 1. RENDER MAIN CALENDAR GRID WITH EVENT TAGS ---
 function renderCalendarGrid() {
   const grid = document.getElementById("calendarGrid");
   const monthYearHeader = document.getElementById("currentMonthYear");
@@ -184,17 +185,16 @@ function renderCalendarGrid() {
 
   const firstDay = new Date(year, month, 1).getDay();
   const daysInMonth = new Date(year, month + 1, 0).getDate();
-
   const today = new Date();
 
-  // Blank cells for alignment
+  // Alignment empty cells
   for (let i = 0; i < firstDay; i++) {
     const emptyCell = document.createElement("div");
     emptyCell.className = "calendar-day-cell empty";
     grid.appendChild(emptyCell);
   }
 
-  // Render day cells
+  // Day cells
   for (let day = 1; day <= daysInMonth; day++) {
     const cell = document.createElement("div");
     cell.className = "calendar-day-cell";
@@ -203,7 +203,6 @@ function renderCalendarGrid() {
     const formattedMonth = String(month + 1).padStart(2, '0');
     const dateStr = `${year}-${formattedMonth}-${formattedDay}`;
 
-    // Highlight current day
     if (today.getFullYear() === year && today.getMonth() === month && today.getDate() === day) {
       cell.classList.add("today");
     }
@@ -213,40 +212,64 @@ function renderCalendarGrid() {
     dayNum.textContent = day;
     cell.appendChild(dayNum);
 
-    // Filter events matching cell date
+    // Event container inside cell
+    const eventsContainer = document.createElement("div");
+    eventsContainer.className = "cell-events-wrapper";
+
+    // Match events for this date
     const dayEvents = cachedEvents.filter(e => e.event_date === dateStr);
     dayEvents.forEach(ev => {
       const pill = document.createElement("div");
       pill.className = "course-tag-pill";
-      pill.title = `${ev.course_code}: ${ev.title} (${ev.description})`;
+      pill.title = `${ev.course_code}: ${ev.title} - ${ev.description}`;
       pill.textContent = `[${ev.course_code}] ${ev.title}`;
-      cell.appendChild(pill);
+      eventsContainer.appendChild(pill);
     });
 
+    cell.appendChild(eventsContainer);
     grid.appendChild(cell);
   }
 }
 
-function renderDeadlinesList() {
-  const list = document.getElementById("calendarList");
-  if (!list) return;
+// --- 2. RENDER DEADLINES GROUPED BY COURSE CODE BELOW CALENDAR ---
+function renderGroupedDeadlines() {
+  const container = document.getElementById("groupedDeadlinesContainer");
+  if (!container) return;
 
   if (cachedEvents.length === 0) {
-    list.innerHTML = "<p>No deadlines found yet. Upload a syllabus in chat!</p>";
+    container.innerHTML = "<p>No deadlines found yet. Upload a syllabus in chat!</p>";
     return;
   }
 
-  list.innerHTML = cachedEvents.map(ev => `
-    <div class="card" style="margin-top: 8px;">
-      <span class="course-tag-pill" style="display:inline-block; margin-bottom: 5px;">${DOMPurify.sanitize(ev.course_code)}</span>
-      <h3>${ev.event_date}</h3>
-      <h4>${DOMPurify.sanitize(ev.title)}</h4>
-      <p>${DOMPurify.sanitize(ev.description)}</p>
+  // Group events by course_code
+  const grouped = cachedEvents.reduce((acc, ev) => {
+    const code = ev.course_code || "GENERAL";
+    if (!acc[code]) acc[code] = [];
+    acc[code].push(ev);
+    return acc;
+  }, {});
+
+  // Build section per course code
+  container.innerHTML = Object.entries(grouped).map(([courseCode, events]) => `
+    <div class="course-group-card">
+      <div class="course-group-header">
+        <span class="course-header-badge">${DOMPurify.sanitize(courseCode)}</span>
+        <span class="course-count-tag">${events.length} Deadline${events.length > 1 ? 's' : ''}</span>
+      </div>
+      <div class="cards-grid">
+        ${events.map(ev => `
+          <div class="card">
+            <div class="card-date-badge">${ev.event_date}</div>
+            <h4 class="card-event-title">${DOMPurify.sanitize(ev.title)}</h4>
+            <p class="card-event-desc">${DOMPurify.sanitize(ev.description)}</p>
+          </div>
+        `).join("")}
+      </div>
     </div>
   `).join("");
 }
 
-// Month Navigation Controls
+// Month Navigation
 document.getElementById("prevMonthBtn").addEventListener("click", () => {
   currentDate.setMonth(currentDate.getMonth() - 1);
   renderCalendarGrid();
@@ -257,7 +280,7 @@ document.getElementById("nextMonthBtn").addEventListener("click", () => {
   renderCalendarGrid();
 });
 
-// --- DARK MODE TOGGLE ---
+// Dark Mode Toggle
 document.getElementById("darkToggle").addEventListener("change", (e) => {
   document.body.classList.toggle("dark-mode", e.target.checked);
 });
