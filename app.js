@@ -1,11 +1,13 @@
 // --- CONFIGURATION ---
-// Replace this with your active Kaggle ngrok URL
 const API_BASE = "https://uncrown-everglade-outflank.ngrok-free.dev/api";
 
-// Standard headers required to bypass ngrok's browser warning landing page
 const DEFAULT_HEADERS = {
   "ngrok-skip-browser-warning": "true"
 };
+
+// Global state for calendar navigation
+let currentDate = new Date();
+let cachedEvents = [];
 
 // --- DOM ELEMENTS ---
 const hamburgerBtn = document.getElementById("hamburgerBtn");
@@ -42,18 +44,17 @@ menuItems.forEach(item => {
     document.getElementById("appTitle").textContent = item.textContent.trim();
     toggleDrawer(false);
 
-    // Refresh view data when opened
     if (item.dataset.target === "notes-view") loadNotesHistory();
     if (item.dataset.target === "calendar-view") loadCalendarEvents();
   });
 });
 
-// --- DATE STAMP FOR MY NOTES ---
+// --- DATE STAMP FOR NOTES ---
 document.getElementById("noteDateStamp").textContent = new Date().toLocaleDateString('en-US', {
   weekday: 'short', month: 'short', day: 'numeric', year: 'numeric'
 });
 
-// --- MY NOTES: BACKEND SAVE & RETRIEVAL ---
+// --- MY NOTES BACKEND LOGIC ---
 document.getElementById("saveNoteBtn").addEventListener("click", async () => {
   const title = document.getElementById("noteTitleInput").value;
   const content = document.getElementById("noteContentArea").value;
@@ -72,27 +73,25 @@ document.getElementById("saveNoteBtn").addEventListener("click", async () => {
     
     const data = await res.json();
     if (res.ok && data.status === "success") {
-      alert("Note saved to backend!");
+      alert("Note saved!");
       loadNotesHistory();
     } else {
-      alert(`Error saving note: ${data.error || "Unknown error"}`);
+      alert(`Error: ${data.error || "Failed to save note"}`);
     }
   } catch (err) {
     console.error("Save note error:", err);
-    alert("Connection error: Ensure your Kaggle notebook and ngrok tunnel are running.");
+    alert("Connection error: Ensure Kaggle backend and ngrok are online.");
   }
 });
 
 async function loadNotesHistory() {
   const container = document.getElementById("savedNotesList");
   try {
-    const res = await fetch(`${API_BASE}/notes`, {
-      headers: DEFAULT_HEADERS
-    });
+    const res = await fetch(`${API_BASE}/notes`, { headers: DEFAULT_HEADERS });
     const notes = await res.json();
     
     if (!res.ok) {
-      container.innerHTML = `<p>Error loading notes: ${notes.error || "Server issue"}</p>`;
+      container.innerHTML = `<p>Error loading notes: ${notes.error || "Server error"}</p>`;
       return;
     }
 
@@ -104,12 +103,11 @@ async function loadNotesHistory() {
       </div>
     `).join("");
   } catch (e) {
-    console.error("Load notes error:", e);
-    container.innerHTML = "<p>Failed to load saved notes. Verify Kaggle backend state.</p>";
+    container.innerHTML = "<p>Failed to load saved notes.</p>";
   }
 }
 
-// --- SYLLABUS UPLOAD TO GEMMA (PDF/DOCX/TXT) ---
+// --- SYLLABUS UPLOAD ---
 document.getElementById("syllabusInput").addEventListener("change", async (e) => {
   const file = e.target.files[0];
   if (!file) return;
@@ -129,17 +127,17 @@ document.getElementById("syllabusInput").addEventListener("change", async (e) =>
     const data = await res.json();
 
     if (!res.ok) {
-      appendChatMessage(`❌ Upload Error (${res.status}): ${data.error || "Failed to parse file"}`, "bot-message");
+      appendChatMessage(`❌ Upload Error (${res.status}): ${data.error || "Failed to process syllabus"}`, "bot-message");
       return;
     }
 
-    appendChatMessage(`✅ Syllabus parsed! Gemma extracted ${data.events_found} key deadlines into your Calendar.`, "bot-message");
+    appendChatMessage(`✅ [${data.course_code}] Syllabus parsed! Extracted ${data.events_found} key deadlines into your Calendar.`, "bot-message");
     
-    // Automatically reload calendar view data if visible
+    // Reload calendar data to render the new course events
     loadCalendarEvents();
   } catch (err) {
     console.error("Syllabus Upload Error:", err);
-    appendChatMessage("❌ Connection Error: Unable to reach Kaggle backend. Check if your ngrok tunnel is active.", "bot-message");
+    appendChatMessage("❌ Connection Error: Check active state of Kaggle session.", "bot-message");
   }
 });
 
@@ -153,39 +151,111 @@ function appendChatMessage(text, className) {
   box.scrollTop = box.scrollHeight;
 }
 
-// --- CALENDAR RETRIEVAL ---
+// --- DYNAMIC GRID CALENDAR LOGIC ---
 async function loadCalendarEvents() {
+  try {
+    const res = await fetch(`${API_BASE}/calendar`, { headers: DEFAULT_HEADERS });
+    cachedEvents = await res.json();
+    
+    if (!res.ok) {
+      document.getElementById("calendarList").innerHTML = `<p>Error loading calendar: ${cachedEvents.error}</p>`;
+      return;
+    }
+
+    renderCalendarGrid();
+    renderDeadlinesList();
+  } catch (e) {
+    console.error("Calendar fetch error:", e);
+    document.getElementById("calendarList").innerHTML = "<p>Error connecting to Calendar backend.</p>";
+  }
+}
+
+function renderCalendarGrid() {
+  const grid = document.getElementById("calendarGrid");
+  const monthYearHeader = document.getElementById("currentMonthYear");
+  if (!grid || !monthYearHeader) return;
+
+  grid.innerHTML = "";
+
+  const year = currentDate.getFullYear();
+  const month = currentDate.getMonth();
+
+  monthYearHeader.textContent = currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+
+  const firstDay = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+  const today = new Date();
+
+  // Blank cells for alignment
+  for (let i = 0; i < firstDay; i++) {
+    const emptyCell = document.createElement("div");
+    emptyCell.className = "calendar-day-cell empty";
+    grid.appendChild(emptyCell);
+  }
+
+  // Render day cells
+  for (let day = 1; day <= daysInMonth; day++) {
+    const cell = document.createElement("div");
+    cell.className = "calendar-day-cell";
+
+    const formattedDay = String(day).padStart(2, '0');
+    const formattedMonth = String(month + 1).padStart(2, '0');
+    const dateStr = `${year}-${formattedMonth}-${formattedDay}`;
+
+    // Highlight current day
+    if (today.getFullYear() === year && today.getMonth() === month && today.getDate() === day) {
+      cell.classList.add("today");
+    }
+
+    const dayNum = document.createElement("div");
+    dayNum.className = "calendar-day-number";
+    dayNum.textContent = day;
+    cell.appendChild(dayNum);
+
+    // Filter events matching cell date
+    const dayEvents = cachedEvents.filter(e => e.event_date === dateStr);
+    dayEvents.forEach(ev => {
+      const pill = document.createElement("div");
+      pill.className = "course-tag-pill";
+      pill.title = `${ev.course_code}: ${ev.title} (${ev.description})`;
+      pill.textContent = `[${ev.course_code}] ${ev.title}`;
+      cell.appendChild(pill);
+    });
+
+    grid.appendChild(cell);
+  }
+}
+
+function renderDeadlinesList() {
   const list = document.getElementById("calendarList");
   if (!list) return;
 
-  try {
-    const res = await fetch(`${API_BASE}/calendar`, {
-      headers: DEFAULT_HEADERS
-    });
-    const events = await res.json();
-    
-    if (!res.ok) {
-      list.innerHTML = `<p>Error fetching calendar: ${events.error || "Server error"}</p>`;
-      return;
-    }
-
-    if (events.length === 0) {
-      list.innerHTML = "<p>No deadlines found yet. Upload a syllabus in chat!</p>";
-      return;
-    }
-
-    list.innerHTML = events.map(ev => `
-      <div class="card">
-        <h3>${ev.event_date}</h3>
-        <h4>${DOMPurify.sanitize(ev.title)}</h4>
-        <p>${DOMPurify.sanitize(ev.description)}</p>
-      </div>
-    `).join("");
-  } catch (e) {
-    console.error("Load calendar error:", e);
-    list.innerHTML = "<p>Error connecting to Calendar backend. Check ngrok connection.</p>";
+  if (cachedEvents.length === 0) {
+    list.innerHTML = "<p>No deadlines found yet. Upload a syllabus in chat!</p>";
+    return;
   }
+
+  list.innerHTML = cachedEvents.map(ev => `
+    <div class="card" style="margin-top: 8px;">
+      <span class="course-tag-pill" style="display:inline-block; margin-bottom: 5px;">${DOMPurify.sanitize(ev.course_code)}</span>
+      <h3>${ev.event_date}</h3>
+      <h4>${DOMPurify.sanitize(ev.title)}</h4>
+      <p>${DOMPurify.sanitize(ev.description)}</p>
+    </div>
+  `).join("");
 }
+
+// Month Navigation Controls
+document.getElementById("prevMonthBtn").addEventListener("click", () => {
+  currentDate.setMonth(currentDate.getMonth() - 1);
+  renderCalendarGrid();
+});
+
+document.getElementById("nextMonthBtn").addEventListener("click", () => {
+  currentDate.setMonth(currentDate.getMonth() + 1);
+  renderCalendarGrid();
+});
 
 // --- DARK MODE TOGGLE ---
 document.getElementById("darkToggle").addEventListener("change", (e) => {
