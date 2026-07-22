@@ -5,13 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Gemma AI Study Workspace</title>
   
-  <!-- CSS Stylesheets (Explicit relative paths) -->
-  <link rel="stylesheet" href="./src/styles/main.css">
-  <link rel="stylesheet" href="./src/styles/chat.css">
-  <link rel="stylesheet" href="./src/styles/calendar.css">
-  <link rel="stylesheet" href="./src/styles/notes.css">
+  <!-- Cache-busted stylesheet references (?v=1 forces refresh) -->
+  <link rel="stylesheet" href="./src/styles/main.css?v=1">
+  <link rel="stylesheet" href="./src/styles/chat.css?v=1">
+  <link rel="stylesheet" href="./src/styles/calendar.css?v=1">
+  <link rel="stylesheet" href="./src/styles/notes.css?v=1">
   
-  <!-- External Markdown & Sanitization Libraries -->
+  <!-- External Libraries -->
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.6/dist/purify.min.js"></script>
 </head>
@@ -47,7 +47,7 @@
     <section id="notes-view" class="app-view hidden"></section>
   </main>
 
-  <!-- ES6 Module Entry point (Explicit relative path) -->
+  <!-- Central Controller Module -->
   <script type="module" src="./src/app.js"></script>
 </body>
 </html>
