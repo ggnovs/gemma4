@@ -62,8 +62,28 @@
     <section id="calendar-view" class="app-view hidden">
       <h2>Academic Calendar</h2>
       <p class="subtitle">Important dates automatically parsed from your syllabus uploads.</p>
-      <div id="calendarList" class="cards-grid">
-        <!-- Calendar items populate here -->
+      
+      <!-- Calendar Header & Month Navigation -->
+      <div class="calendar-header-bar">
+        <button id="prevMonthBtn" class="month-nav-btn">&larr;</button>
+        <h2 id="currentMonthYear">Month Year</h2>
+        <button id="nextMonthBtn" class="month-nav-btn">&rarr;</button>
+      </div>
+
+      <!-- Days of Week Header -->
+      <div class="calendar-days-header">
+        <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span>
+      </div>
+
+      <!-- Dynamic Calendar Days Grid -->
+      <div id="calendarGrid" class="calendar-grid"></div>
+
+      <!-- All Course Deadlines List -->
+      <div class="upcoming-deadlines-section">
+        <h3>📋 All Syllabus Deadlines</h3>
+        <div id="calendarList" class="cards-grid">
+          <!-- Course deadline cards populate here -->
+        </div>
       </div>
     </section>
 
