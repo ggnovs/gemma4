@@ -3,71 +3,209 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Gemma AI Study Workspace</title>
-  
-  <link rel="stylesheet" href="./src/styles/main.css?v=2">
-  <link rel="stylesheet" href="./src/styles/chat.css?v=2">
-  <link rel="stylesheet" href="./src/styles/calendar.css?v=2">
-  <link rel="stylesheet" href="./src/styles/notes.css?v=2">
-  <link rel="stylesheet" href="./src/styles/quiz.css?v=2">
-  
-  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.6/dist/purify.min.js"></script>
+  <title>Gemma AI Workspace - Hackathon Test Bench</title>
+  <style>
+    :root { --primary: #0d6efd; --bg: #f8f9fa; --card-bg: #ffffff; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: #333; max-width: 900px; margin: 30px auto; padding: 0 20px; }
+    h1 { color: #1a1a1a; margin-bottom: 5px; }
+    .subtitle { color: #666; margin-bottom: 20px; font-size: 0.95rem; }
+    .card { background: var(--card-bg); border-radius: 8px; padding: 20px; margin-bottom: 20px; border: 1px solid #e0e0e0; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+    .card h2 { margin-top: 0; font-size: 1.2rem; color: #222; border-bottom: 2px solid #f0f0f0; padding-bottom: 8px; }
+    label { font-weight: 600; font-size: 0.9rem; display: block; margin-top: 10px; }
+    input[type="text"], textarea, input[type="file"] { width: 100%; padding: 10px; margin-top: 6px; margin-bottom: 12px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
+    button { background: var(--primary); color: white; border: none; padding: 10px 16px; border-radius: 6px; font-weight: 600; cursor: pointer; transition: background 0.2s; }
+    button:hover { background: #0b5ed7; }
+    .output-box { background: #f1f3f5; padding: 12px; border-radius: 6px; min-height: 40px; white-space: pre-wrap; font-size: 0.95rem; border: 1px solid #e9ecef; word-break: break-word; }
+    .status-badge { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 0.85rem; font-weight: bold; }
+    .quiz-item { background: #ffffff; border: 1px solid #ddd; padding: 12px; border-radius: 6px; margin-top: 10px; }
+  </style>
 </head>
 <body>
 
-  <!-- Header -->
-  <header class="app-header">
-    <div class="header-left">
-      <button id="hamburgerBtn" class="icon-btn">☰</button>
-      <h1 id="appTitle">Gemma Chat</h1>
-    </div>
-    <span class="user-badge">Student Mode</span>
-  </header>
+  <h1>🎓 Gemma AI Study Workspace</h1>
+  <p class="subtitle">Hackathon Quick Test Bench (Gemma 2 GPU Backend)</p>
 
-  <!-- Navigation Drawer -->
-  <div id="drawerOverlay" class="drawer-overlay hidden"></div>
-  <nav id="navDrawer" class="nav-drawer hidden">
-    <div class="drawer-header">
-      <h3>Navigation</h3>
-      <button id="closeDrawerBtn" class="icon-btn">✕</button>
-    </div>
-    <ul class="drawer-menu">
-      <li data-target="chat-view" class="menu-item active">💬 Gemma Chat</li>
-      <li data-target="calendar-view" class="menu-item">📅 My Calendar</li>
-      <li data-target="notes-view" class="menu-item">📝 My Notes</li>
-      <li data-target="quiz-view" class="menu-item">🎯 Quiz Help</li>
-      <li id="openSettingsBtn" class="menu-item">⚙️ Settings</li>
-    </ul>
-  </nav>
-
-  <!-- Settings Modal -->
-  <div id="settingsModal" class="modal-overlay hidden">
-    <div class="modal-card">
-      <div class="modal-header">
-        <h3>Settings</h3>
-        <button id="closeSettingsBtn" class="icon-btn">✕</button>
-      </div>
-      <div class="modal-body">
-        <div class="setting-row">
-          <span>Dark Mode</span>
-          <label class="switch">
-            <input type="checkbox" id="darkModeToggle">
-            <span class="slider round"></span>
-          </label>
-        </div>
-      </div>
-    </div>
+  <!-- 1. CONNECTION CONFIGURATION -->
+  <div class="card">
+    <h2>1. Backend API Connection</h2>
+    <label>Paste Kaggle Ngrok Base API URL:</label>
+    <input type="text" id="apiUrl" placeholder="https://xxxx.ngrok-free.dev/api">
+    <button onclick="testConnection()">Connect & Check Health</button>
+    <div id="healthResult" style="margin-top: 10px;"></div>
   </div>
 
-  <!-- Component View Containers -->
-  <main class="content-container">
-    <section id="chat-view" class="app-view active"></section>
-    <section id="calendar-view" class="app-view hidden"></section>
-    <section id="notes-view" class="app-view hidden"></section>
-    <section id="quiz-view" class="app-view hidden"></section>
-  </main>
+  <!-- 2. AI CONCEPT TUTOR -->
+  <div class="card">
+    <h2>2. 💬 24/7 AI Concept Tutor (/api/chat)</h2>
+    <label>Ask Gemma a study question:</label>
+    <textarea id="chatInput" rows="3" placeholder="e.g., Explain normal distribution in statistics with a practical example."></textarea>
+    <button onclick="sendChat()">Ask Gemma</button>
+    <label>Response:</label>
+    <div id="chatOutput" class="output-box">AI tutor response will appear here...</div>
+  </div>
 
-  <script type="module" src="./src/app.js?v=2"></script>
+  <!-- 3. AUTOMATED QUIZ GENERATION -->
+  <div class="card">
+    <h2>3. 🎯 Document Analysis & Automated Quiz Generation (/api/generate-quiz)</h2>
+    <label>Upload Lecture Slides or Notes (PDF, DOCX, TXT):</label>
+    <input type="file" id="slideFile" accept=".pdf,.docx,.txt">
+    <button onclick="generateQuiz()">Generate Quiz MCQs</button>
+    <label>Generated JSON / Quiz Output:</label>
+    <div id="quizOutput" class="output-box">Quiz questions will be generated here...</div>
+  </div>
+
+  <!-- 4. NOTES MANAGEMENT -->
+  <div class="card">
+    <h2>4. 📝 Study Workspace Notes (/api/notes)</h2>
+    <label>Note Title:</label>
+    <input type="text" id="noteTitle" placeholder="e.g., Computer Networks Chapter 3">
+    <label>Note Content:</label>
+    <textarea id="noteContent" rows="2" placeholder="Key takeaways from lecture..."></textarea>
+    <button onclick="saveNote()">Save Note to SQLite</button>
+    <button onclick="loadNotes()" style="background:#6c757d;">Refresh Notes List</button>
+    <label>Stored Notes in Database:</label>
+    <div id="notesOutput" class="output-box">Saved notes will appear here...</div>
+  </div>
+
+  <script>
+    // Helper to get sanitized URL
+    function getBaseUrl() {
+      const url = document.getElementById('apiUrl').value.trim();
+      return url.endsWith('/') ? url.slice(0, -1) : url;
+    }
+
+    // 1. Health Check
+    async function testConnection() {
+      const url = getBaseUrl();
+      const out = document.getElementById('healthResult');
+      if (!url) return alert("Please enter the Ngrok Base API URL!");
+
+      out.innerHTML = "<span style='color: orange;'>Connecting to Kaggle GPU...</span>";
+      try {
+        const res = await fetch(`${url}/health`, {
+          headers: { "ngrok-skip-browser-warning": "true" }
+        });
+        const data = await res.json();
+        out.innerHTML = `<span class="status-badge" style="background:#d1e7dd; color:#0f5132;">✅ Connected! Model: ${data.model} | Device: ${data.device}</span>`;
+      } catch (e) {
+        out.innerHTML = `<span class="status-badge" style="background:#f8d7da; color:#842029;">❌ Connection Failed: ${e.message}</span>`;
+      }
+    }
+
+    // 2. Chat Endpoint
+    async function sendChat() {
+      const url = getBaseUrl();
+      const msg = document.getElementById('chatInput').value.trim();
+      const out = document.getElementById('chatOutput');
+      if (!url || !msg) return alert("Please fill in both API URL and Question!");
+
+      out.innerText = "⏳ Gemma is processing your query on GPU...";
+      try {
+        const res = await fetch(`${url}/chat`, {
+          method: "POST",
+          headers: { 
+            "Content-Type": "application/json",
+            "ngrok-skip-browser-warning": "true"
+          },
+          body: JSON.stringify({ message: msg })
+        });
+        const data = await res.json();
+        out.innerText = data.response || data.error || "No response received.";
+      } catch (e) {
+        out.innerText = "❌ Error: " + e.message;
+      }
+    }
+
+    // 3. Automated Quiz Generation Endpoint
+    async function generateQuiz() {
+      const url = getBaseUrl();
+      const fileInput = document.getElementById('slideFile');
+      const out = document.getElementById('quizOutput');
+
+      if (!url) return alert("Please enter the API URL!");
+      if (!fileInput.files[0]) return alert("Please select a file first!");
+
+      const formData = new FormData();
+      formData.append("slides", fileInput.files[0]);
+
+      out.innerText = "⏳ Reading file & generating quiz questions via Gemma GPU...";
+
+      try {
+        const res = await fetch(`${url}/generate-quiz`, {
+          method: "POST",
+          headers: { "ngrok-skip-browser-warning": "true" },
+          body: formData
+        });
+        const data = await res.json();
+        if (data.quiz) {
+          out.innerHTML = "<strong>Generated Questions:</strong><br><br>" + 
+            data.quiz.map((q, idx) => `
+              <div class="quiz-item">
+                <strong>Q${idx+1}: ${q.question}</strong><br>
+                ${q.options.map((opt, i) => `${i === q.correct_index ? '✅' : '⚪'} ${opt}`).join('<br>')}
+              </div>
+            `).join('');
+        } else {
+          out.innerText = "Error: " + (data.error || "Failed to generate quiz.");
+        }
+      } catch (e) {
+        out.innerText = "❌ Error uploading or generating: " + e.message;
+      }
+    }
+
+    // 4. Notes Endpoints (Save & Fetch)
+    async function saveNote() {
+      const url = getBaseUrl();
+      const title = document.getElementById('noteTitle').value.trim();
+      const content = document.getElementById('noteContent').value.trim();
+      if (!url || !title) return alert("API URL and Note Title are required!");
+
+      try {
+        const res = await fetch(`${url}/notes`, {
+          method: "POST",
+          headers: { 
+            "Content-Type": "application/json",
+            "ngrok-skip-browser-warning": "true"
+          },
+          body: JSON.stringify({ title, content })
+        });
+        const data = await res.json();
+        if (data.status === "success") {
+          alert("Note saved successfully!");
+          document.getElementById('noteTitle').value = "";
+          document.getElementById('noteContent').value = "";
+          loadNotes();
+        }
+      } catch (e) {
+        alert("Error saving note: " + e.message);
+      }
+    }
+
+    async function loadNotes() {
+      const url = getBaseUrl();
+      const out = document.getElementById('notesOutput');
+      if (!url) return alert("Please enter the API URL!");
+
+      out.innerText = "Loading notes from SQLite database...";
+      try {
+        const res = await fetch(`${url}/notes`, {
+          headers: { "ngrok-skip-browser-warning": "true" }
+        });
+        const notes = await res.json();
+        if (Array.isArray(notes) && notes.length > 0) {
+          out.innerHTML = notes.map(n => `
+            <div style="border-bottom: 1px solid #ddd; padding: 6px 0;">
+              <strong>${n.title}</strong> <small>(${n.created_at})</small><br>
+              <span>${n.content}</span>
+            </div>
+          `).join('');
+        } else {
+          out.innerText = "No notes found in SQLite database.";
+        }
+      } catch (e) {
+        out.innerText = "❌ Error fetching notes: " + e.message;
+      }
+    }
+  </script>
 </body>
 </html>
