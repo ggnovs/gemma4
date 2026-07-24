@@ -138,7 +138,6 @@
       <button class="icon-btn" onclick="toggleDrawer()">✕</button>
     </div>
     <ul class="drawer-menu">
-      <!-- Notice the connection view is gone! -->
       <li class="menu-item active" onclick="switchView('chat-view', 'Gemma AI Tutor', this)">💬 Gemma Chat</li>
       <li class="menu-item" onclick="switchView('quiz-view', 'Automated Quiz Help', this)">🎯 Quiz Generator</li>
       <li class="menu-item" onclick="switchView('notes-view', 'Study Notes', this)">📝 My Notes</li>
@@ -149,7 +148,7 @@
   <!-- Main View Containers -->
   <main class="content-container">
 
-    <!-- 1. AI TUTOR VIEW (Now the default active page) -->
+    <!-- 1. AI TUTOR VIEW -->
     <section id="chat-view" class="app-view active">
       <div class="card">
         <h2>💬 24/7 AI Concept Tutor (/api/chat)</h2>
@@ -212,16 +211,13 @@
 
     // --- Startup Initialization ---
     window.addEventListener('DOMContentLoaded', () => {
-      // 1. Auto-connect to backend on load
       autoConnectBackend();
       
-      // 2. Load Dark Mode preference
       const isDark = localStorage.getItem('gemma_theme') === 'dark';
       document.getElementById('darkModeToggle').checked = isDark;
       toggleDarkMode(isDark);
     });
 
-    // Auto-Connect Function
     async function autoConnectBackend() {
       const badge = document.getElementById('connectionBadge');
       try {
@@ -230,20 +226,18 @@
         });
         const data = await res.json();
         badge.innerHTML = `🟢 Connected: ${data.model}`;
-        badge.style.color = "#198754"; // Green text
+        badge.style.color = "#198754";
       } catch (e) {
         badge.innerHTML = `🔴 Offline/Error`;
-        badge.style.color = "#dc3545"; // Red text
+        badge.style.color = "#dc3545";
       }
     }
 
-    // Toggle Drawer Navigation
     function toggleDrawer() {
       document.getElementById('navDrawer').classList.toggle('open');
       document.getElementById('drawerOverlay').classList.toggle('active');
     }
 
-    // Switch Tab Views
     function switchView(viewId, titleText, element) {
       document.querySelectorAll('.app-view').forEach(v => v.classList.remove('active'));
       document.querySelectorAll('.menu-item').forEach(m => m.classList.remove('active'));
@@ -254,7 +248,6 @@
       toggleDrawer();
     }
 
-    // Dark Mode Switcher
     function toggleDarkMode(enableDark) {
       if (enableDark) {
         document.body.setAttribute('data-theme', 'dark');
@@ -299,15 +292,75 @@
           body: formData
         });
         const data = await res.json();
+        
         if (data.quiz) {
           out.innerHTML = data.quiz.map((q, idx) => `
-            <div style="border:1px solid var(--border); padding:10px; margin-top:8px; border-radius:6px;">
-              <strong>Q${idx+1}: ${q.question}</strong><br>
-              ${q.options.map((opt, i) => `${i === q.correct_index ? '✅' : '⚪'} ${opt}`).join('<br>')}
+            <div style="border:1px solid var(--border); padding:15px; margin-top:12px; border-radius:6px; background:var(--card-bg);">
+              <strong>Q${idx+1}: ${q.question}</strong><br><br>
+              <div id="options-container-${idx}">
+                ${q.options.map((opt, i) => `
+                  <label style="display:block; margin-bottom:8px; cursor:pointer;">
+                    <input type="radio" name="question-${idx}" value="${i}" style="margin-right:8px;">
+                    ${opt}
+                  </label>
+                `).join('')}
+              </div>
+              <button onclick='checkAnswer(${idx}, ${JSON.stringify(q.question)}, ${JSON.stringify(q.options)}, ${q.correct_index})' style="margin-top:8px; font-size:0.85rem; padding:6px 12px;">Check Answer</button>
+              <div id="feedback-${idx}" style="margin-top:10px; font-size:0.9rem; display:none; padding:10px; border-radius:4px;"></div>
             </div>
           `).join('');
-        } else { out.innerText = "Error: " + data.error; }
-      } catch (e) { out.innerText = "❌ Error: " + e.message; }
+        } else { 
+          out.innerText = "Error: " + data.error; 
+        }
+      } catch (e) { 
+        out.innerText = "❌ Error: " + e.message; 
+      }
+    }
+
+    async function checkAnswer(qIdx, questionText, optionsArr, correctIdx) {
+      const container = document.getElementById(`options-container-${qIdx}`);
+      const selectedInput = container.querySelector(`input[name="question-${qIdx}"]:checked`);
+      const feedbackBox = document.getElementById(`feedback-${qIdx}`);
+
+      if (!selectedInput) {
+        alert("Please select an option first!");
+        return;
+      }
+
+      const selectedIdx = parseInt(selectedInput.value);
+      feedbackBox.style.display = "block";
+      feedbackBox.style.background = "rgba(0,0,0,0.05)";
+      feedbackBox.innerText = "⏳ Gemma is analyzing your answer...";
+
+      try {
+        const res = await fetch(`${API_BASE_URL}/evaluate-answer`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "ngrok-skip-browser-warning": "true" },
+          body: JSON.stringify({
+            question: questionText,
+            options: optionsArr,
+            correct_index: correctIdx,
+            selected_index: selectedIdx
+          })
+        });
+        const data = await res.json();
+
+        if (data.explanation) {
+          if (data.is_correct) {
+            feedbackBox.style.background = "rgba(25, 135, 84, 0.15)";
+            feedbackBox.style.border = "1px solid #198754";
+            feedbackBox.innerHTML = `<strong>✅ Correct!</strong><br>${data.explanation}`;
+          } else {
+            feedbackBox.style.background = "rgba(220, 53, 69, 0.15)";
+            feedbackBox.style.border = "1px solid #dc3545";
+            feedbackBox.innerHTML = `<strong>❌ Incorrect.</strong><br>${data.explanation}`;
+          }
+        } else {
+          feedbackBox.innerText = "Error: " + data.error;
+        }
+      } catch (e) {
+        feedbackBox.innerText = "❌ Error evaluating answer: " + e.message;
+      }
     }
 
     async function saveNote() {
