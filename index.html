@@ -295,18 +295,18 @@
         
         if (data.quiz) {
           out.innerHTML = data.quiz.map((q, idx) => `
-            <div style="border:1px solid var(--border); padding:15px; margin-top:12px; border-radius:6px; background:var(--card-bg);">
-              <strong>Q${idx+1}: ${q.question}</strong><br><br>
-              <div id="options-container-${idx}">
+            <div style="border:1px solid var(--border); padding:16px; margin-top:14px; border-radius:8px; background:var(--card-bg);">
+              <div style="font-weight: 600; margin-bottom: 12px; font-size: 1rem;">Q${idx+1}: ${q.question}</div>
+              <div id="options-container-${idx}" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px;">
                 ${q.options.map((opt, i) => `
-                  <label style="display:block; margin-bottom:8px; cursor:pointer;">
-                    <input type="radio" name="question-${idx}" value="${i}" style="margin-right:8px;">
-                    ${opt}
+                  <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; padding: 8px 10px; border-radius: 6px; border: 1px solid var(--border); background: rgba(0,0,0,0.01);">
+                    <input type="radio" name="question-${idx}" value="${i}" style="margin: 0; cursor: pointer;">
+                    <span style="line-height: 1.4;">${opt}</span>
                   </label>
                 `).join('')}
               </div>
-              <button onclick='checkAnswer(${idx}, ${JSON.stringify(q.question)}, ${JSON.stringify(q.options)}, ${q.correct_index})' style="margin-top:8px; font-size:0.85rem; padding:6px 12px;">Check Answer</button>
-              <div id="feedback-${idx}" style="margin-top:10px; font-size:0.9rem; display:none; padding:10px; border-radius:4px;"></div>
+              <button onclick='checkAnswer(${idx}, ${JSON.stringify(q.question)}, ${JSON.stringify(q.options)}, ${q.correct_index})' style="font-size: 0.85rem; padding: 8px 16px;">Check Answer</button>
+              <div id="feedback-${idx}" style="margin-top: 10px; font-size: 0.9rem; display: none; padding: 10px; border-radius: 6px; line-height: 1.4;"></div>
             </div>
           `).join('');
         } else { 
