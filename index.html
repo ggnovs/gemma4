@@ -281,6 +281,9 @@
     // ==========================================
     const API_BASE_URL = "https://uncrown-everglade-outflank.ngrok-free.dev/api";
 
+    // Track total questions loaded for the current quiz session
+    let totalQuizCount = 0;
+
     // --- Startup Initialization ---
     window.addEventListener('DOMContentLoaded', () => {
       autoConnectBackend();
@@ -411,14 +414,26 @@
       chatMessages.scrollTop = chatMessages.scrollHeight;
     }
 
-    async function generateQuiz() {
+    async function generateQuiz(isAppending = false) {
       const fileInput = document.getElementById('slideFile');
       const out = document.getElementById('quizOutput');
-      if (!fileInput.files[0]) return alert("Please select a file!");
+      
+      if (!isAppending && !fileInput.files[0]) {
+        return alert("Please select a file!");
+      }
 
       const formData = new FormData();
-      formData.append("slides", fileInput.files[0]);
-      out.innerText = "⏳ Generating quiz on GPU...";
+      if (fileInput.files[0]) {
+        formData.append("slides", fileInput.files[0]);
+      }
+
+      if (!isAppending) {
+        totalQuizCount = 0;
+        out.innerText = "⏳ Generating quiz on GPU...";
+      } else {
+        const loadMoreBtn = document.getElementById('loadMoreQuizBtn');
+        if (loadMoreBtn) loadMoreBtn.innerText = "⏳ Generating more questions...";
+      }
 
       try {
         const res = await fetch(`${API_BASE_URL}/generate-quiz`, {
@@ -429,26 +444,73 @@
         const data = await res.json();
         
         if (data.quiz) {
-          out.innerHTML = data.quiz.map((q, idx) => `
-            <div style="border:1px solid var(--border); padding:16px; margin-top:14px; border-radius:8px; background:var(--card-bg);">
-              <div style="font-weight: 600; margin-bottom: 12px; font-size: 1rem;">Q${idx+1}: ${q.question}</div>
-              <div id="options-container-${idx}" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px;">
-                ${q.options.map((opt, i) => `
-                  <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; padding: 8px 10px; border-radius: 6px; border: 1px solid var(--border); background: rgba(0,0,0,0.01);">
-                    <input type="radio" name="question-${idx}" value="${i}" style="margin: 0; cursor: pointer;">
-                    <span style="line-height: 1.4;">${opt}</span>
-                  </label>
-                `).join('')}
+          if (!isAppending) {
+            out.innerHTML = "";
+          } else {
+            const existingBtnContainer = document.getElementById('quizMoreContainer');
+            if (existingBtnContainer) existingBtnContainer.remove();
+          }
+
+          const newHtml = data.quiz.map((q) => {
+            totalQuizCount++;
+            const idx = totalQuizCount - 1;
+            return `
+              <div style="border:1px solid var(--border); padding:16px; margin-top:14px; border-radius:8px; background:var(--card-bg);">
+                <div style="font-weight: 600; margin-bottom: 12px; font-size: 1rem;">Q${totalQuizCount}: ${q.question}</div>
+                <div id="options-container-${idx}" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px;">
+                  ${q.options.map((opt, i) => `
+                    <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; padding: 8px 10px; border-radius: 6px; border: 1px solid var(--border); background: rgba(0,0,0,0.01);">
+                      <input type="radio" name="question-${idx}" value="${i}" style="margin: 0; cursor: pointer;">
+                      <span style="line-height: 1.4;">${opt}</span>
+                    </label>
+                  `).join('')}
+                </div>
+                <button onclick='checkAnswer(${idx}, ${JSON.stringify(q.question)}, ${JSON.stringify(q.options)}, ${q.correct_index})' style="font-size: 0.85rem; padding: 8px 16px;">Check Answer</button>
+                <div id="feedback-${idx}" style="margin-top: 10px; font-size: 0.9rem; display: none; padding: 10px; border-radius: 6px; line-height: 1.4;"></div>
               </div>
-              <button onclick='checkAnswer(${idx}, ${JSON.stringify(q.question)}, ${JSON.stringify(q.options)}, ${q.correct_index})' style="font-size: 0.85rem; padding: 8px 16px;">Check Answer</button>
-              <div id="feedback-${idx}" style="margin-top: 10px; font-size: 0.9rem; display: none; padding: 10px; border-radius: 6px; line-height: 1.4;"></div>
-            </div>
-          `).join('');
+            `;
+          }).join('');
+
+          if (!isAppending) {
+            out.innerHTML = newHtml;
+          } else {
+            out.insertAdjacentHTML('beforeend', newHtml);
+          }
+
+          // Render "Generate more questions" button or max limit message if under 20
+          if (totalQuizCount < 20) {
+            const btnContainerHTML = `
+              <div id="quizMoreContainer" style="margin-top: 20px; text-align: center;">
+                <button id="loadMoreQuizBtn" onclick="generateQuiz(true)" style="background: var(--primary); padding: 12px 24px; font-size: 0.95rem;">Generate more questions</button>
+              </div>
+            `;
+            out.insertAdjacentHTML('beforeend', btnContainerHTML);
+          } else {
+            const limitMsgHTML = `
+              <div id="quizMoreContainer" style="margin-top: 20px; text-align: center; font-style: italic; opacity: 0.8;">
+                Maximum limit of 20 questions reached!
+              </div>
+            `;
+            out.insertAdjacentHTML('beforeend', limitMsgHTML);
+          }
+
         } else { 
-          out.innerText = "Error: " + data.error; 
+          if (!isAppending) {
+            out.innerText = "Error: " + data.error;
+          } else {
+            alert("Error generating more questions: " + data.error);
+            const loadMoreBtn = document.getElementById('loadMoreQuizBtn');
+            if (loadMoreBtn) loadMoreBtn.innerText = "Generate more questions";
+          }
         }
       } catch (e) { 
-        out.innerText = "❌ Error: " + e.message; 
+        if (!isAppending) {
+          out.innerText = "❌ Error: " + e.message;
+        } else {
+          alert("❌ Error: " + e.message);
+          const loadMoreBtn = document.getElementById('loadMoreQuizBtn');
+          if (loadMoreBtn) loadMoreBtn.innerText = "Generate more questions";
+        }
       }
     }
 
