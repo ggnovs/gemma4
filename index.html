@@ -3,208 +3,351 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Gemma AI Workspace - Hackathon Test Bench</title>
+  <title>Gemma AI Study Workspace</title>
   <style>
-    :root { --primary: #0d6efd; --bg: #f8f9fa; --card-bg: #ffffff; }
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: #333; max-width: 900px; margin: 30px auto; padding: 0 20px; }
-    h1 { color: #1a1a1a; margin-bottom: 5px; }
-    .subtitle { color: #666; margin-bottom: 20px; font-size: 0.95rem; }
-    .card { background: var(--card-bg); border-radius: 8px; padding: 20px; margin-bottom: 20px; border: 1px solid #e0e0e0; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
-    .card h2 { margin-top: 0; font-size: 1.2rem; color: #222; border-bottom: 2px solid #f0f0f0; padding-bottom: 8px; }
-    label { font-weight: 600; font-size: 0.9rem; display: block; margin-top: 10px; }
-    input[type="text"], textarea, input[type="file"] { width: 100%; padding: 10px; margin-top: 6px; margin-bottom: 12px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
-    button { background: var(--primary); color: white; border: none; padding: 10px 16px; border-radius: 6px; font-weight: 600; cursor: pointer; transition: background 0.2s; }
-    button:hover { background: #0b5ed7; }
-    .output-box { background: #f1f3f5; padding: 12px; border-radius: 6px; min-height: 40px; white-space: pre-wrap; font-size: 0.95rem; border: 1px solid #e9ecef; word-break: break-word; }
-    .status-badge { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 0.85rem; font-weight: bold; }
-    .quiz-item { background: #ffffff; border: 1px solid #ddd; padding: 12px; border-radius: 6px; margin-top: 10px; }
+    :root {
+      --bg: #f8f9fa;
+      --card-bg: #ffffff;
+      --text: #333333;
+      --border: #e0e0e0;
+      --primary: #0d6efd;
+      --header-bg: #1a1c23;
+      --header-text: #ffffff;
+      --drawer-bg: #212529;
+    }
+
+    [data-theme="dark"] {
+      --bg: #121212;
+      --card-bg: #1e1e1e;
+      --text: #e0e0e0;
+      --border: #333333;
+      --primary: #3d8bfd;
+      --header-bg: #0d0d0d;
+      --header-text: #ffffff;
+      --drawer-bg: #181818;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      margin: 0;
+      padding: 0;
+      transition: background 0.3s, color 0.3s;
+    }
+
+    /* Top Navigation Header */
+    .app-header {
+      background: var(--header-bg);
+      color: var(--header-text);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 20px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+
+    .header-left { display: flex; align-items: center; gap: 15px; }
+    .icon-btn { background: none; border: none; color: white; font-size: 1.5rem; cursor: pointer; }
+    .app-title { margin: 0; font-size: 1.25rem; font-weight: 600; }
+    
+    /* Connection Badge */
+    #connectionBadge {
+      font-size: 0.85rem; padding: 6px 12px; background: rgba(255,255,255,0.1); 
+      border-radius: 20px; font-weight: bold;
+    }
+
+    /* Side Navigation Drawer */
+    .drawer-overlay {
+      position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+      background: rgba(0,0,0,0.5); display: none; z-index: 99;
+    }
+    .drawer-overlay.active { display: block; }
+
+    .nav-drawer {
+      position: fixed; top: 0; left: -260px; width: 250px; height: 100%;
+      background: var(--drawer-bg); color: white; z-index: 100;
+      transition: left 0.3s ease; box-shadow: 2px 0 8px rgba(0,0,0,0.3);
+    }
+    .nav-drawer.open { left: 0; }
+
+    .drawer-header {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 15px; border-bottom: 1px solid #333;
+    }
+    .drawer-menu { list-style: none; padding: 0; margin: 10px 0; }
+    .menu-item {
+      padding: 12px 20px; cursor: pointer; display: flex; align-items: center; gap: 10px;
+      transition: background 0.2s;
+    }
+    .menu-item:hover, .menu-item.active { background: rgba(255,255,255,0.1); }
+
+    /* Page View Sections */
+    .content-container { max-width: 850px; margin: 30px auto; padding: 0 20px; }
+    .app-view { display: none; }
+    .app-view.active { display: block; }
+
+    .card {
+      background: var(--card-bg); border-radius: 8px; padding: 20px;
+      margin-bottom: 20px; border: 1px solid var(--border);
+    }
+    .card h2 { margin-top: 0; font-size: 1.2rem; border-bottom: 2px solid var(--border); padding-bottom: 8px; }
+
+    input[type="text"], textarea, input[type="file"] {
+      width: 100%; padding: 10px; margin-top: 6px; margin-bottom: 12px;
+      border: 1px solid var(--border); border-radius: 6px; box-sizing: border-box;
+      background: var(--card-bg); color: var(--text);
+    }
+
+    button {
+      background: var(--primary); color: white; border: none; padding: 10px 16px;
+      border-radius: 6px; font-weight: 600; cursor: pointer;
+    }
+    .output-box {
+      background: rgba(0,0,0,0.03); padding: 12px; border-radius: 6px;
+      min-height: 40px; white-space: pre-wrap; word-break: break-word; border: 1px solid var(--border);
+    }
+    
+    /* Toggle Switch Styling */
+    .switch-container { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; }
+    .switch { position: relative; display: inline-block; width: 46px; height: 24px; }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .3s; border-radius: 24px; }
+    .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .3s; border-radius: 50%; }
+    input:checked + .slider { background-color: var(--primary); }
+    input:checked + .slider:before { transform: translateX(22px); }
   </style>
 </head>
 <body>
 
-  <h1>🎓 Gemma AI Study Workspace</h1>
-  <p class="subtitle">Hackathon Quick Test Bench (Gemma 2 GPU Backend)</p>
+  <!-- App Header -->
+  <header class="app-header">
+    <div class="header-left">
+      <button id="hamburgerBtn" class="icon-btn" onclick="toggleDrawer()">☰</button>
+      <h1 class="app-title" id="viewTitle">Gemma AI Tutor</h1>
+    </div>
+    <!-- Status Badge -->
+    <div id="connectionBadge" style="color: #ffc107;">🟡 Checking connection...</div>
+  </header>
 
-  <!-- 1. CONNECTION CONFIGURATION -->
-  <div class="card">
-    <h2>1. Backend API Connection</h2>
-    <label>Paste Kaggle Ngrok Base API URL:</label>
-    <input type="text" id="apiUrl" placeholder="https://xxxx.ngrok-free.dev/api">
-    <button onclick="testConnection()">Connect & Check Health</button>
-    <div id="healthResult" style="margin-top: 10px;"></div>
-  </div>
+  <!-- Side Navigation Drawer -->
+  <div id="drawerOverlay" class="drawer-overlay" onclick="toggleDrawer()"></div>
+  <nav id="navDrawer" class="nav-drawer">
+    <div class="drawer-header">
+      <h3 style="margin:0;">Workspace Navigation</h3>
+      <button class="icon-btn" onclick="toggleDrawer()">✕</button>
+    </div>
+    <ul class="drawer-menu">
+      <!-- Notice the connection view is gone! -->
+      <li class="menu-item active" onclick="switchView('chat-view', 'Gemma AI Tutor', this)">💬 Gemma Chat</li>
+      <li class="menu-item" onclick="switchView('quiz-view', 'Automated Quiz Help', this)">🎯 Quiz Generator</li>
+      <li class="menu-item" onclick="switchView('notes-view', 'Study Notes', this)">📝 My Notes</li>
+      <li class="menu-item" onclick="switchView('settings-view', 'App Settings', this)">⚙️ Settings</li>
+    </ul>
+  </nav>
 
-  <!-- 2. AI CONCEPT TUTOR -->
-  <div class="card">
-    <h2>2. 💬 24/7 AI Concept Tutor (/api/chat)</h2>
-    <label>Ask Gemma a study question:</label>
-    <textarea id="chatInput" rows="3" placeholder="e.g., Explain normal distribution in statistics with a practical example."></textarea>
-    <button onclick="sendChat()">Ask Gemma</button>
-    <label>Response:</label>
-    <div id="chatOutput" class="output-box">AI tutor response will appear here...</div>
-  </div>
+  <!-- Main View Containers -->
+  <main class="content-container">
 
-  <!-- 3. AUTOMATED QUIZ GENERATION -->
-  <div class="card">
-    <h2>3. 🎯 Document Analysis & Automated Quiz Generation (/api/generate-quiz)</h2>
-    <label>Upload Lecture Slides or Notes (PDF, DOCX, TXT):</label>
-    <input type="file" id="slideFile" accept=".pdf,.docx,.txt">
-    <button onclick="generateQuiz()">Generate Quiz MCQs</button>
-    <label>Generated JSON / Quiz Output:</label>
-    <div id="quizOutput" class="output-box">Quiz questions will be generated here...</div>
-  </div>
+    <!-- 1. AI TUTOR VIEW (Now the default active page) -->
+    <section id="chat-view" class="app-view active">
+      <div class="card">
+        <h2>💬 24/7 AI Concept Tutor (/api/chat)</h2>
+        <label>Ask Gemma a study question:</label>
+        <textarea id="chatInput" rows="3" placeholder="e.g., Explain normal distribution in statistics with a practical example."></textarea>
+        <button onclick="sendChat()">Ask Gemma</button>
+        <label style="margin-top:15px;">Response:</label>
+        <div id="chatOutput" class="output-box">AI tutor response will appear here...</div>
+      </div>
+    </section>
 
-  <!-- 4. NOTES MANAGEMENT -->
-  <div class="card">
-    <h2>4. 📝 Study Workspace Notes (/api/notes)</h2>
-    <label>Note Title:</label>
-    <input type="text" id="noteTitle" placeholder="e.g., Computer Networks Chapter 3">
-    <label>Note Content:</label>
-    <textarea id="noteContent" rows="2" placeholder="Key takeaways from lecture..."></textarea>
-    <button onclick="saveNote()">Save Note to SQLite</button>
-    <button onclick="loadNotes()" style="background:#6c757d;">Refresh Notes List</button>
-    <label>Stored Notes in Database:</label>
-    <div id="notesOutput" class="output-box">Saved notes will appear here...</div>
-  </div>
+    <!-- 2. QUIZ GENERATOR VIEW -->
+    <section id="quiz-view" class="app-view">
+      <div class="card">
+        <h2>🎯 Document Analysis & Automated Quiz Generation</h2>
+        <label>Upload Lecture Slides or Notes (PDF, DOCX, TXT):</label>
+        <input type="file" id="slideFile" accept=".pdf,.docx,.txt">
+        <button onclick="generateQuiz()">Generate Quiz MCQs</button>
+        <label style="margin-top:15px;">Generated JSON / Quiz Output:</label>
+        <div id="quizOutput" class="output-box">Quiz questions will be generated here...</div>
+      </div>
+    </section>
+
+    <!-- 3. NOTES VIEW -->
+    <section id="notes-view" class="app-view">
+      <div class="card">
+        <h2>📝 Study Workspace Notes (/api/notes)</h2>
+        <label>Note Title:</label>
+        <input type="text" id="noteTitle" placeholder="e.g., Statistics Notes - July 2026">
+        <label>Note Content:</label>
+        <textarea id="noteContent" rows="3" placeholder="Key takeaways from lecture..."></textarea>
+        <button onclick="saveNote()">Save Note to SQLite</button>
+        <button onclick="loadNotes()" style="background:#6c757d; margin-left: 8px;">Refresh Notes List</button>
+        <label style="margin-top:15px;">Stored Notes in Database:</label>
+        <div id="notesOutput" class="output-box">Saved notes will appear here...</div>
+      </div>
+    </section>
+
+    <!-- 4. SETTINGS VIEW -->
+    <section id="settings-view" class="app-view">
+      <div class="card">
+        <h2>⚙️ Preferences</h2>
+        <div class="switch-container">
+          <span><strong>Dark Mode Theme</strong></span>
+          <label class="switch">
+            <input type="checkbox" id="darkModeToggle" onchange="toggleDarkMode(this.checked)">
+            <span class="slider"></span>
+          </label>
+        </div>
+      </div>
+    </section>
+
+  </main>
 
   <script>
-    // Helper to get sanitized URL
-    function getBaseUrl() {
-      const url = document.getElementById('apiUrl').value.trim();
-      return url.endsWith('/') ? url.slice(0, -1) : url;
-    }
+    // ==========================================
+    // ⚠️ UPDATE THIS URL WHEN YOU RESTART KAGGLE
+    // ==========================================
+    const API_BASE_URL = "https://uncrown-everglade-outflank.ngrok-free.dev/api";
 
-    // 1. Health Check
-    async function testConnection() {
-      const url = getBaseUrl();
-      const out = document.getElementById('healthResult');
-      if (!url) return alert("Please enter the Ngrok Base API URL!");
+    // --- Startup Initialization ---
+    window.addEventListener('DOMContentLoaded', () => {
+      // 1. Auto-connect to backend on load
+      autoConnectBackend();
+      
+      // 2. Load Dark Mode preference
+      const isDark = localStorage.getItem('gemma_theme') === 'dark';
+      document.getElementById('darkModeToggle').checked = isDark;
+      toggleDarkMode(isDark);
+    });
 
-      out.innerHTML = "<span style='color: orange;'>Connecting to Kaggle GPU...</span>";
+    // Auto-Connect Function
+    async function autoConnectBackend() {
+      const badge = document.getElementById('connectionBadge');
       try {
-        const res = await fetch(`${url}/health`, {
-          headers: { "ngrok-skip-browser-warning": "true" }
+        const res = await fetch(`${API_BASE_URL}/health`, { 
+          headers: { "ngrok-skip-browser-warning": "true" } 
         });
         const data = await res.json();
-        out.innerHTML = `<span class="status-badge" style="background:#d1e7dd; color:#0f5132;">✅ Connected! Model: ${data.model} | Device: ${data.device}</span>`;
+        badge.innerHTML = `🟢 Connected: ${data.model}`;
+        badge.style.color = "#198754"; // Green text
       } catch (e) {
-        out.innerHTML = `<span class="status-badge" style="background:#f8d7da; color:#842029;">❌ Connection Failed: ${e.message}</span>`;
+        badge.innerHTML = `🔴 Offline/Error`;
+        badge.style.color = "#dc3545"; // Red text
       }
     }
 
-    // 2. Chat Endpoint
+    // Toggle Drawer Navigation
+    function toggleDrawer() {
+      document.getElementById('navDrawer').classList.toggle('open');
+      document.getElementById('drawerOverlay').classList.toggle('active');
+    }
+
+    // Switch Tab Views
+    function switchView(viewId, titleText, element) {
+      document.querySelectorAll('.app-view').forEach(v => v.classList.remove('active'));
+      document.querySelectorAll('.menu-item').forEach(m => m.classList.remove('active'));
+      
+      document.getElementById(viewId).classList.add('active');
+      document.getElementById('viewTitle').innerText = titleText;
+      element.classList.add('active');
+      toggleDrawer();
+    }
+
+    // Dark Mode Switcher
+    function toggleDarkMode(enableDark) {
+      if (enableDark) {
+        document.body.setAttribute('data-theme', 'dark');
+        localStorage.setItem('gemma_theme', 'dark');
+      } else {
+        document.body.removeAttribute('data-theme');
+        localStorage.setItem('gemma_theme', 'light');
+      }
+    }
+
+    // --- Core API Features ---
     async function sendChat() {
-      const url = getBaseUrl();
       const msg = document.getElementById('chatInput').value.trim();
       const out = document.getElementById('chatOutput');
-      if (!url || !msg) return alert("Please fill in both API URL and Question!");
+      if (!msg) return alert("Question required!");
 
-      out.innerText = "⏳ Gemma is processing your query on GPU...";
+      out.innerText = "⏳ Gemma GPU processing...";
       try {
-        const res = await fetch(`${url}/chat`, {
+        const res = await fetch(`${API_BASE_URL}/chat`, {
           method: "POST",
-          headers: { 
-            "Content-Type": "application/json",
-            "ngrok-skip-browser-warning": "true"
-          },
+          headers: { "Content-Type": "application/json", "ngrok-skip-browser-warning": "true" },
           body: JSON.stringify({ message: msg })
         });
         const data = await res.json();
-        out.innerText = data.response || data.error || "No response received.";
-      } catch (e) {
-        out.innerText = "❌ Error: " + e.message;
-      }
+        out.innerText = data.response || data.error;
+      } catch (e) { out.innerText = "❌ Error: " + e.message; }
     }
 
-    // 3. Automated Quiz Generation Endpoint
     async function generateQuiz() {
-      const url = getBaseUrl();
       const fileInput = document.getElementById('slideFile');
       const out = document.getElementById('quizOutput');
-
-      if (!url) return alert("Please enter the API URL!");
-      if (!fileInput.files[0]) return alert("Please select a file first!");
+      if (!fileInput.files[0]) return alert("Please select a file!");
 
       const formData = new FormData();
       formData.append("slides", fileInput.files[0]);
-
-      out.innerText = "⏳ Reading file & generating quiz questions via Gemma GPU...";
+      out.innerText = "⏳ Generating quiz on GPU...";
 
       try {
-        const res = await fetch(`${url}/generate-quiz`, {
+        const res = await fetch(`${API_BASE_URL}/generate-quiz`, {
           method: "POST",
           headers: { "ngrok-skip-browser-warning": "true" },
           body: formData
         });
         const data = await res.json();
         if (data.quiz) {
-          out.innerHTML = "<strong>Generated Questions:</strong><br><br>" + 
-            data.quiz.map((q, idx) => `
-              <div class="quiz-item">
-                <strong>Q${idx+1}: ${q.question}</strong><br>
-                ${q.options.map((opt, i) => `${i === q.correct_index ? '✅' : '⚪'} ${opt}`).join('<br>')}
-              </div>
-            `).join('');
-        } else {
-          out.innerText = "Error: " + (data.error || "Failed to generate quiz.");
-        }
-      } catch (e) {
-        out.innerText = "❌ Error uploading or generating: " + e.message;
-      }
+          out.innerHTML = data.quiz.map((q, idx) => `
+            <div style="border:1px solid var(--border); padding:10px; margin-top:8px; border-radius:6px;">
+              <strong>Q${idx+1}: ${q.question}</strong><br>
+              ${q.options.map((opt, i) => `${i === q.correct_index ? '✅' : '⚪'} ${opt}`).join('<br>')}
+            </div>
+          `).join('');
+        } else { out.innerText = "Error: " + data.error; }
+      } catch (e) { out.innerText = "❌ Error: " + e.message; }
     }
 
-    // 4. Notes Endpoints (Save & Fetch)
     async function saveNote() {
-      const url = getBaseUrl();
       const title = document.getElementById('noteTitle').value.trim();
       const content = document.getElementById('noteContent').value.trim();
-      if (!url || !title) return alert("API URL and Note Title are required!");
+      if (!title) return alert("Title required!");
 
       try {
-        const res = await fetch(`${url}/notes`, {
+        const res = await fetch(`${API_BASE_URL}/notes`, {
           method: "POST",
-          headers: { 
-            "Content-Type": "application/json",
-            "ngrok-skip-browser-warning": "true"
-          },
+          headers: { "Content-Type": "application/json", "ngrok-skip-browser-warning": "true" },
           body: JSON.stringify({ title, content })
         });
         const data = await res.json();
         if (data.status === "success") {
-          alert("Note saved successfully!");
+          alert("Note saved!");
           document.getElementById('noteTitle').value = "";
           document.getElementById('noteContent').value = "";
           loadNotes();
         }
-      } catch (e) {
-        alert("Error saving note: " + e.message);
-      }
+      } catch (e) { alert("Error: " + e.message); }
     }
 
     async function loadNotes() {
-      const url = getBaseUrl();
       const out = document.getElementById('notesOutput');
-      if (!url) return alert("Please enter the API URL!");
-
-      out.innerText = "Loading notes from SQLite database...";
+      out.innerText = "Loading notes...";
       try {
-        const res = await fetch(`${url}/notes`, {
-          headers: { "ngrok-skip-browser-warning": "true" }
+        const res = await fetch(`${API_BASE_URL}/notes`, { 
+          headers: { "ngrok-skip-browser-warning": "true" } 
         });
         const notes = await res.json();
         if (Array.isArray(notes) && notes.length > 0) {
           out.innerHTML = notes.map(n => `
-            <div style="border-bottom: 1px solid #ddd; padding: 6px 0;">
+            <div style="border-bottom: 1px solid var(--border); padding: 8px 0;">
               <strong>${n.title}</strong> <small>(${n.created_at})</small><br>
-              <span>${n.content}</span>
+              <div>${n.content}</div>
             </div>
           `).join('');
-        } else {
-          out.innerText = "No notes found in SQLite database.";
-        }
-      } catch (e) {
-        out.innerText = "❌ Error fetching notes: " + e.message;
-      }
+        } else { out.innerText = "No notes found."; }
+      } catch (e) { out.innerText = "❌ Error: " + e.message; }
     }
   </script>
 </body>
