@@ -247,15 +247,19 @@
     <!-- 3. NOTES VIEW -->
     <section id="notes-view" class="app-view">
       <div class="card">
-        <h2>📝 Study Workspace Notes (/api/notes)</h2>
+        <h2>📝 Study Workspace Notes</h2>
         <label>Note Title:</label>
         <input type="text" id="noteTitle" placeholder="e.g., Statistics Notes - July 2026">
         <label>Note Content:</label>
         <textarea id="noteContent" rows="3" placeholder="Key takeaways from lecture..."></textarea>
-        <button onclick="saveNote()">Save Note</button>
-        <button onclick="loadNotes()" style="background:#6c757d; margin-left: 8px;">Refresh Notes List</button>
+        
+        <div style="margin-top: 10px; margin-bottom: 15px;">
+          <button onclick="saveNote()">Save Note</button>
+          <button onclick="loadNotes()" style="background:#6c757d; margin-left: 8px;">Refresh Notes List</button>
+        </div>
+        
         <label style="margin-top:15px;">Stored Notes in Database:</label>
-        <div id="notesOutput" class="output-box">Saved notes will appear here...</div>
+        <div id="notesOutput" class="output-box" style="margin-top: 8px; border: none; background: transparent; padding: 0;">Saved notes will appear here...</div>
       </div>
     </section>
 
@@ -467,9 +471,9 @@
                 </div>
                 <button onclick='checkAnswer(${idx}, ${JSON.stringify(q.question)}, ${JSON.stringify(q.options)}, ${q.correct_index})' style="font-size: 0.85rem; padding: 8px 16px;">Check Answer</button>
                 <div id="feedback-${idx}" style="margin-top: 10px; font-size: 0.9rem; display: none; padding: 10px; border-radius: 6px; line-height: 1.4;"></div>
-              </div>
-            `;
-          }).join('');
+            </div>
+          `;
+        }).join('');
 
           if (!isAppending) {
             out.innerHTML = newHtml;
@@ -482,14 +486,14 @@
             const btnContainerHTML = `
               <div id="quizMoreContainer" style="margin-top: 20px; text-align: center;">
                 <button id="loadMoreQuizBtn" onclick="generateQuiz(true)" style="background: var(--primary); padding: 12px 24px; font-size: 0.95rem;">Generate more questions</button>
-              </div>
+            </div>
             `;
             out.insertAdjacentHTML('beforeend', btnContainerHTML);
           } else {
             const limitMsgHTML = `
               <div id="quizMoreContainer" style="margin-top: 20px; text-align: center; font-style: italic; opacity: 0.8;">
                 Maximum limit of 20 questions reached!
-              </div>
+            </div>
             `;
             out.insertAdjacentHTML('beforeend', limitMsgHTML);
           }
@@ -538,7 +542,7 @@
             options: optionsArr,
             correct_index: correctIdx,
             selected_index: selectedIdx
-          })
+        })
         });
         const data = await res.json();
 
@@ -578,7 +582,7 @@
           document.getElementById('noteContent').value = "";
           loadNotes();
         }
-      } catch (e) { alert("Error: " + e.message); }
+    } catch (e) { alert("Error: " + e.message); }
     }
 
     async function loadNotes() {
@@ -591,9 +595,12 @@
         const notes = await res.json();
         if (Array.isArray(notes) && notes.length > 0) {
           out.innerHTML = notes.map(n => `
-            <div style="border-bottom: 1px solid var(--border); padding: 8px 0;">
-              <strong>${n.title}</strong> <small>(${n.created_at})</small><br>
-              <div>${n.content}</div>
+            <div style="border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; margin-bottom: 12px; background: var(--card-bg);">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                <strong style="font-size: 1rem;">${n.title}</strong> 
+                <small style="opacity: 0.7; font-size: 0.8rem;">${n.created_at}</small>
+              </div>
+              <div style="font-size: 0.95rem; line-height: 1.5; white-space: pre-wrap;">${n.content}</div>
             </div>
           `).join('');
         } else { out.innerText = "No notes found."; }
